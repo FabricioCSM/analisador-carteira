@@ -143,18 +143,22 @@ def _parse_quote(item):
 # 1. COLETA DE DADOS DA CARTEIRA
 # ============================================================
 def coletar_cotacoes(carteira):
-    tickers = ",".join([a["ticker"] for a in carteira])
-    log(f"Buscando cotações: {tickers}")
-    url = f"https://brapi.dev/api/quote/{tickers}"
-    data = fetch_json(url, params=_brapi_params(fundamental="true", dividends="true"), label="Cotações")
-    if not data or "results" not in data:
-        log("Não foi possível obter cotações da brapi.dev", "ERR")
-        return {}
+    log(f"Buscando cotações: {', '.join(a['ticker'] for a in carteira)}")
     resultados = {}
-    for item in data["results"]:
-        symbol = item.get("symbol", "")
-        resultados[symbol] = _parse_quote(item)
-        log(f"  {symbol}: R$ {resultados[symbol]['preco']:.2f} ({resultados[symbol]['variacao_dia']:+.2f}%)", "OK")
+    for ativo in carteira:
+        t = ativo["ticker"]
+        url = f"https://brapi.dev/api/quote/{t}"
+        data = fetch_json(url, params=_brapi_params(fundamental="true", dividends="true"), label=t)
+        if data and "results" in data:
+            for item in data["results"]:
+                symbol = item.get("symbol", "")
+                resultados[symbol] = _parse_quote(item)
+                log(f"  {symbol}: R$ {resultados[symbol]['preco']:.2f} ({resultados[symbol]['variacao_dia']:+.2f}%)", "OK")
+        else:
+            log(f"  {t}: falhou", "WARN")
+        time.sleep(0.5)
+    if not resultados:
+        log("Não foi possível obter cotações da brapi.dev", "ERR")
     return resultados
 
 
@@ -293,20 +297,18 @@ def escanear_oportunidades():
     def buscar_lote(tickers, categoria):
         if not tickers:
             return
-        for i in range(0, len(tickers), 8):
-            lote = tickers[i:i+8]
-            joined = ",".join(lote)
-            log(f"  Buscando {categoria}: {joined}")
-            url = f"https://brapi.dev/api/quote/{joined}"
+        for t in tickers:
+            log(f"  Buscando {categoria}: {t}")
+            url = f"https://brapi.dev/api/quote/{t}"
             data = fetch_json(url, params=_brapi_params(fundamental="true", dividends="true"),
-                              label=f"Scan {categoria}")
+                              label=f"Scan {t}")
             if data and "results" in data:
                 for item in data["results"]:
                     symbol = item.get("symbol", "")
                     resultados[categoria][symbol] = _parse_quote(item)
                     dy = resultados[categoria][symbol]["dividend_yield"]
                     log(f"    {symbol}: R$ {resultados[categoria][symbol]['preco']:.2f} | DY: {dy:.1f}%", "OK")
-            time.sleep(1)
+            time.sleep(0.5)
 
     buscar_lote(acoes_scan, "acoes")
     buscar_lote(fiis_scan, "fiis")
