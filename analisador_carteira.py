@@ -5,7 +5,7 @@
 ║      ANALISADOR INTELIGENTE DE CARTEIRA v2.1                 ║
 ║  Coleta dados macro + carteira + oportunidades               ║
 ║  + Commodities (ouro, prata, petróleo)                       ║
-║  → Análise com Claude AI (metodologia Suno)                  ║
+║  → Análise com Gemini AI (metodologia Suno)                  ║
 ╚══════════════════════════════════════════════════════════════╝
 
 Requisitos:
@@ -16,7 +16,7 @@ Uso:
 
 Configuração:
   - BRAPI_TOKEN: token da brapi.dev (grátis em brapi.dev/dashboard)
-  - ANTHROPIC_API_KEY: chave da API Anthropic (console.anthropic.com)
+  - GEMINI_API_KEY: chave da API Gemini (aistudio.google.com)
 """
 
 import requests
@@ -42,7 +42,7 @@ CARTEIRA = [
 # CONFIGURAÇÃO DE APIs — EDITE AQUI
 # ============================================================
 BRAPI_TOKEN = os.environ.get("BRAPI_TOKEN", "COLOQUE_SEU_TOKEN_AQUI")
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "COLOQUE_SUA_CHAVE_AQUI")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "COLOQUE_SUA_CHAVE_GEMINI_AQUI")
 
 # ============================================================
 # WATCHLIST DE OPORTUNIDADES — Ativos para monitorar
@@ -345,7 +345,7 @@ def buscar_noticias_google(query):
 # ============================================================
 def analisar_com_claude(carteira, cotacoes, commodities, indices,
                         noticias_macro, noticias_ativos, oportunidades=None):
-    log("Enviando dados para Claude AI analisar...", "AI")
+    log("Enviando dados para Gemini AI analisar...", "AI")
 
     dados_carteira = []
     total_investido = 0
@@ -605,28 +605,34 @@ REGRAS:
 - APENAS JSON, sem markdown, sem backticks, sem texto extra."""
 
     try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
         r = requests.post(
-            "https://api.anthropic.com/v1/messages",
+            url,
             headers={
                 "Content-Type": "application/json",
-                "x-api-key": ANTHROPIC_API_KEY,
-                "anthropic-version": "2023-06-01",
+                "x-goog-api-key": GEMINI_API_KEY,
             },
             json={
-                "model": "claude-sonnet-4-20250514",
-                "max_tokens": 8000,
-                "messages": [{"role": "user", "content": prompt}],
+                "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "maxOutputTokens": 8192,
+                    "temperature": 0.3,
+                    "responseMimeType": "application/json",
+                },
             },
             timeout=180,
         )
         if r.status_code != 200:
-            log(f"Erro na API Claude: {r.status_code} - {r.text[:200]}", "ERR")
+            log(f"Erro na API Gemini: {r.status_code} - {r.text[:300]}", "ERR")
             return None
         resp = r.json()
+        # Gemini response: candidates[0].content.parts[0].text
         texto = ""
-        for block in resp.get("content", []):
-            if block.get("type") == "text":
-                texto += block["text"]
+        candidates = resp.get("candidates", [])
+        if candidates:
+            parts = candidates[0].get("content", {}).get("parts", [])
+            for part in parts:
+                texto += part.get("text", "")
         texto = texto.strip()
         if texto.startswith("```"):
             texto = texto.split("\n", 1)[1] if "\n" in texto else texto[3:]
@@ -634,13 +640,13 @@ REGRAS:
             texto = texto[:-3]
         texto = texto.strip()
         analise = json.loads(texto)
-        log("Análise recebida com sucesso!", "OK")
+        log("Análise Gemini recebida com sucesso!", "OK")
         return analise
     except json.JSONDecodeError as e:
-        log(f"Erro ao parsear JSON: {e}", "ERR")
+        log(f"Erro ao parsear JSON do Gemini: {e}", "ERR")
         return None
     except Exception as e:
-        log(f"Erro ao chamar Claude: {e}", "ERR")
+        log(f"Erro ao chamar Gemini: {e}", "ERR")
         return None
 
 
@@ -821,7 +827,7 @@ def gerar_html(carteira, cotacoes, commodities, indices, analise, noticias_macro
                 oportunidades_html += '</div></div>'
 
     if not oportunidades_html:
-        oportunidades_html = '<p style="color:var(--text2)">Configure BRAPI_TOKEN e ANTHROPIC_API_KEY para ver oportunidades.</p>'
+        oportunidades_html = '<p style="color:var(--text2)">Configure BRAPI_TOKEN e GEMINI_API_KEY para ver oportunidades.</p>'
 
     # --- MACRO ---
     commodities_html = ""
@@ -859,7 +865,7 @@ def gerar_html(carteira, cotacoes, commodities, indices, analise, noticias_macro
     alertas_html = "".join(f'<div class="alerta-item">⚡ {esc(a)}</div>' for a in (analise.get("alertas", []) if analise else []))
     eventos_html = "".join(f'<div class="evento-item">📅 {esc(e)}</div>' for e in (analise.get("proximos_eventos", []) if analise else []))
     sugestao = esc(analise.get("sugestao_aporte", "Análise não disponível")) if analise else "Configure as chaves de API."
-    resumo = esc(analise.get("resumo_geral", "")) if analise else "Configure BRAPI_TOKEN e ANTHROPIC_API_KEY para análises."
+    resumo = esc(analise.get("resumo_geral", "")) if analise else "Configure BRAPI_TOKEN e GEMINI_API_KEY para análises."
 
     html_content = f"""<!DOCTYPE html>
 <html lang="pt-BR">
@@ -1008,14 +1014,14 @@ def gerar_html(carteira, cotacoes, commodities, indices, analise, noticias_macro
     <div class="fonte-item"><span class="fonte-badge">MACRO</span> <a href="https://dadosabertos.bcb.gov.br">API BCB (SGS)</a> — Selic Meta, IPCA mensal</div>
     <div class="fonte-item"><span class="fonte-badge">SCANNER</span> <a href="https://brapi.dev">brapi.dev</a> — {len(WATCHLIST_ACOES)} ações + {len(WATCHLIST_FIIS)} FIIs + {len(WATCHLIST_ETFS)} ETFs monitorados</div>
     <div class="fonte-item"><span class="fonte-badge">NOTÍCIAS</span> <a href="https://news.google.com">Google News RSS</a> — Notícias macro e por ativo</div>
-    <div class="fonte-item"><span class="fonte-badge">ANÁLISE IA</span> <a href="https://anthropic.com">Claude AI (Anthropic)</a> — Análise com metodologia Suno Research</div>
+    <div class="fonte-item"><span class="fonte-badge">ANÁLISE IA</span> <a href="https://ai.google.dev">Gemini AI (Google)</a> — Análise com metodologia Suno Research</div>
     <div class="fonte-item"><span class="fonte-badge">MÉTODO</span> Guia Suno Dividendos (Bazin/Barsi) + Guia Small Caps + 101 Perguntas</div>
   </div>
 
   <div class="footer">
     <p>⚠️ Este relatório é meramente informativo e NÃO constitui recomendação de investimento.</p>
     <p>Sempre consulte um assessor certificado. Dados com delay de até 15 min.</p>
-    <p style="margin-top:8px">Gerado por <strong>Analisador de Carteira v2.1</strong> — <a href="https://brapi.dev">brapi.dev</a> + <a href="https://anthropic.com">Claude AI</a></p>
+    <p style="margin-top:8px">Gerado por <strong>Analisador de Carteira v2.1</strong> — <a href="https://brapi.dev">brapi.dev</a> + <a href="https://ai.google.dev">Gemini AI</a></p>
   </div>
 </div>
 </body>
@@ -1034,9 +1040,9 @@ def main():
     print("╚══════════════════════════════════════════════════════════════╝")
     print()
 
-    if ANTHROPIC_API_KEY in ("", "COLOQUE_SUA_CHAVE_AQUI"):
-        log("ANTHROPIC_API_KEY não configurada! Análise IA omitida.", "WARN")
-        log("Configure: export ANTHROPIC_API_KEY='sk-ant-...'", "WARN")
+    if GEMINI_API_KEY in ("", "COLOQUE_SUA_CHAVE_GEMINI_AQUI"):
+        log("GEMINI_API_KEY não configurada! Análise IA omitida.", "WARN")
+        log("Configure: export GEMINI_API_KEY='sua-chave-gemini'", "WARN")
         print()
 
     # 1. Cotações da carteira
@@ -1064,7 +1070,7 @@ def main():
 
     # 5. Análise IA
     analise = None
-    if ANTHROPIC_API_KEY not in ("", "COLOQUE_SUA_CHAVE_AQUI"):
+    if GEMINI_API_KEY not in ("", "COLOQUE_SUA_CHAVE_GEMINI_AQUI"):
         analise = analisar_com_claude(CARTEIRA, cotacoes, commodities, indices,
                                       noticias_macro, noticias_ativos, oportunidades)
 
