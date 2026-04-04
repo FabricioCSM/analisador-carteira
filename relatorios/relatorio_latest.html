@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Analisador de Carteira v2.1 — 04/04/2026 às 22:20</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0a0e17;--bg2:#111827;--bg3:#1a2235;--bg4:#243049;--text:#e2e8f0;--text2:#94a3b8;--accent:#3b82f6;--accent2:#8b5cf6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--border:#1e293b; }
+  * { margin:0;padding:0;box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.6; }
+  .container { max-width:1400px;margin:0 auto;padding:24px; }
+  .header { background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:24px;position:relative;overflow:hidden; }
+  .header::before { content:'';position:absolute;top:-50%;right:-20%;width:400px;height:400px;background:radial-gradient(circle,#f59e0b10 0%,transparent 70%);pointer-events:none; }
+  .header-top { display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px; }
+  .header h1 { font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+  .header .date { color:var(--text2);font-size:14px;margin-top:4px; }
+  .sentimento { display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;background:#f59e0b15;border:1px solid #f59e0b30;font-weight:600;color:#f59e0b; }
+  .resumo { margin-top:20px;color:var(--text2);font-size:15px;line-height:1.7; }
+  .totals { display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px; }
+  .total-card { background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center; }
+  .total-card .label { font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:1px; }
+  .total-card .value { font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;margin-top:8px; }
+  .macro-row { display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px; }
+  .commodity-card { background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:12px;flex:1;min-width:180px; }
+  .commodity-card.indice { border-left:3px solid var(--accent); }
+  .comm-name { font-size:13px;color:var(--text2);font-weight:600; }
+  .comm-val { font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px; }
+  .comm-var { font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600; }
+  .ativo-card { background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:20px;transition:border-color .2s; }
+  .ativo-card:hover { border-color:var(--accent); }
+  .ativo-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px; }
+  .ativo-metrics { display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:20px; }
+  .metric-box { background:var(--bg3);border-radius:10px;padding:14px; }
+  .metric-label { font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;display:block; }
+  .metric-value { font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;display:block;margin-top:6px; }
+  .metric-sub { font-family:'JetBrains Mono',monospace;font-size:12px;display:block;margin-top:4px; }
+  .analysis-section { background:var(--bg3);border-radius:10px;padding:16px;margin-bottom:12px; }
+  .analysis-section.macro { border-left:3px solid var(--accent2); }
+  .analysis-section h4 { font-size:13px;color:var(--accent);margin-bottom:8px; }
+  .analysis-section p { font-size:14px;color:var(--text2);line-height:1.7; }
+  .analysis-col { background:var(--bg3);border-radius:10px;padding:16px; }
+  .analysis-col h4 { font-size:13px;margin-bottom:8px; }
+  .analysis-col.positive { border-left:3px solid var(--green); }
+  .analysis-col.positive h4 { color:var(--green); }
+  .analysis-col.negative { border-left:3px solid var(--yellow); }
+  .analysis-col.negative h4 { color:var(--yellow); }
+  .analysis-col p { font-size:13px;color:var(--text2);line-height:1.6; }
+  .dividendos-section { background:var(--bg3);border-radius:10px;padding:16px; }
+  .dividendos-section h4 { font-size:13px;color:var(--accent);margin-bottom:10px; }
+  .div-row { display:flex;gap:16px;padding:6px 0;border-bottom:1px solid var(--bg4);font-size:13px; }
+  .div-row:last-child { border-bottom:none; }
+  .div-date { color:var(--text2);width:100px;font-family:'JetBrains Mono',monospace; }
+  .div-val { color:var(--green);font-family:'JetBrains Mono',monospace;font-weight:600;width:120px; }
+  .div-type { color:var(--text2);font-size:12px; }
+  .opp-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px; }
+  .opp-card { background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;transition:border-color .2s,transform .15s; }
+  .opp-card:hover { border-color:var(--green);transform:translateY(-2px); }
+  .opp-card-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:12px; }
+  .opp-ticker { font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700; }
+  .opp-badge { padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace; }
+  .opp-badge.alta { background:#22c55e20;color:#22c55e;border:1px solid #22c55e40; }
+  .opp-badge.media { background:#f59e0b20;color:#f59e0b;border:1px solid #f59e0b40; }
+  .opp-badge.baixa { background:var(--bg4);color:var(--text2);border:1px solid var(--border); }
+  .opp-metrics { display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px; }
+  .opp-metric { text-align:center;background:var(--bg3);border-radius:8px;padding:8px 4px; }
+  .opp-metric .label { font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px; }
+  .opp-metric .val { font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;display:block;margin-top:2px; }
+  .top3-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px; }
+  .top3-card { background:linear-gradient(135deg,var(--bg2),var(--bg3));border:2px solid var(--green);border-radius:14px;padding:24px;position:relative;overflow:hidden; }
+  .top3-card::before { content:'';position:absolute;top:-30%;right:-15%;width:200px;height:200px;background:radial-gradient(circle,#22c55e10 0%,transparent 70%);pointer-events:none; }
+  .top3-rank { font-family:'JetBrains Mono',monospace;font-size:40px;font-weight:700;color:var(--green);opacity:.3;position:absolute;top:10px;right:18px; }
+  .top3-ticker { font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--green); }
+  .top3-tipo { font-size:11px;color:var(--text2);margin:4px 0 12px; }
+  .top3-motivo { font-size:14px;color:var(--text);line-height:1.6; }
+  .top3-valor { margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--green);font-weight:700; }
+  .grid-bottom { display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px; }
+  .side-card { background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px; }
+  .side-card h3 { font-family:'JetBrains Mono',monospace;font-size:16px;margin-bottom:16px;color:var(--accent); }
+  .sugestao { background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--accent);border-radius:14px;padding:24px;margin-top:24px; }
+  .sugestao h3 { font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--accent);margin-bottom:12px; }
+  .sugestao p { color:var(--text2);font-size:14px;line-height:1.7; }
+  .alerta-item { background:#ef444410;border-left:3px solid var(--red);padding:10px 14px;margin-bottom:8px;border-radius:0 8px 8px 0;font-size:13px; }
+  .evento-item { padding:10px 14px;margin-bottom:8px;background:var(--bg3);border-radius:8px;font-size:13px;color:var(--text2); }
+  .news-item { display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);text-decoration:none;transition:background .15s;gap:12px; }
+  .news-item:hover { background:var(--bg3);border-radius:8px;padding-left:8px; }
+  .news-title { font-size:13px;color:var(--text); }
+  .news-date { font-size:11px;color:var(--text2);white-space:nowrap; }
+  .fontes { background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;margin-top:24px; }
+  .fontes h3 { font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--accent);margin-bottom:12px; }
+  .fonte-item { display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px; }
+  .fonte-item a { color:var(--accent);text-decoration:none; }
+  .fonte-badge { background:var(--bg4);padding:2px 8px;border-radius:4px;font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace; }
+  .footer { text-align:center;padding:32px;color:var(--text2);font-size:12px;border-top:1px solid var(--border);margin-top:32px; }
+  .footer a { color:var(--accent);text-decoration:none; }
+  @media (max-width:768px) { .header h1 { font-size:20px; } .grid-bottom,.analysis-columns { grid-template-columns:1fr; } .container { padding:12px; } .opp-grid { grid-template-columns:1fr; } .top3-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-top">
+      <div><h1>📈 Analisador de Carteira v2.1</h1><div class="date">Relatório gerado em 04/04/2026 às 22:20</div></div>
+      <div class="sentimento">🟡 Mercado NEUTRO</div>
+    </div>
+    <div class="resumo">A carteira atual apresenta extrema concentração em VALE3 (setor cíclico de mineração), com dados de preço atual zerados para os demais ativos, o que distorce a análise de valor e diversificação. O investidor, de perfil moderado e focado em dividendos, precisa urgentemente diversificar para setores perenes e incluir FIIs para renda passiva mensal. O cenário macroeconômico, com Selic elevada e inflação em alta, favorece a renda fixa, mas também cria oportunidades em empresas sólidas e pagadoras de dividendos em setores resilientes. A Vale, apesar de notícias de dividendos extraordinários, é um ativo cíclico e de alta volatilidade, inadequado para uma concentração de 100% em um perfil moderado.</div>
+  </div>
+  <div class="totals">
+    <div class="total-card"><div class="label">Investido</div><div class="value">R$ 998.71</div></div>
+    <div class="total-card"><div class="label">Valor Atual</div><div class="value">R$ 584.85</div></div>
+    <div class="total-card"><div class="label">Resultado</div><div class="value" style="color:#ef4444">R$ -413.86</div></div>
+    <div class="total-card"><div class="label">Rentabilidade</div><div class="value" style="color:#ef4444">-41.44%</div></div>
+    <div class="total-card"><div class="label">Score Carteira</div><div class="value" style="color:var(--accent)">3/10</div></div>
+  </div>
+  <div class="macro-row"><div class="commodity-card indice"><span class="comm-name">Ibovespa</span><span class="comm-val">188,052</span><span class="comm-var" style="color:#22c55e">+0.05%</span></div><div class="commodity-card"><span class="comm-name">🛢️ PETR4 (Petróleo)</span><span class="comm-val">R$ 48.15</span><span class="comm-var" style="color:#22c55e">+1.65%</span></div><div class="commodity-card"><span class="comm-name">📊 Selic Meta</span><span class="comm-val">14.75% a.a.</span><span class="comm-var" style="color:var(--text2)">29/04/2026</span></div><div class="commodity-card"><span class="comm-name">📈 IPCA Mensal</span><span class="comm-val">0.70%</span><span class="comm-var" style="color:var(--text2)">01/02/2026</span></div></div>
+
+  <h2 style="font-family:'JetBrains Mono',monospace;font-size:20px;margin-bottom:16px">⚖️ Composição da Carteira</h2>
+  <div class="ativo-card" style="margin-bottom:24px">
+    <div style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:700;width:70px">VALE3</span>
+          <div style="flex:1">
+            <div style="background:var(--bg4);border-radius:4px;height:20px;overflow:hidden">
+              <div style="background:var(--red);height:100%;width:100%;border-radius:4px;display:flex;align-items:center;padding-left:6px">
+                <span style="font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--bg)">100.0%</span>
+              </div>
+            </div>
+          </div>
+          <span style="font-size:11px;color:var(--text2);width:160px;text-align:right">Mineração<span style="color:var(--yellow);font-size:10px;margin-left:6px">⚡CÍCLICO</span></span>
+        </div><div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:700;width:70px">CMIG4</span>
+          <div style="flex:1">
+            <div style="background:var(--bg4);border-radius:4px;height:20px;overflow:hidden">
+              <div style="background:var(--green);height:100%;width:0%;border-radius:4px;display:flex;align-items:center;padding-left:6px">
+                <span style="font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--bg)">0.0%</span>
+              </div>
+            </div>
+          </div>
+          <span style="font-size:11px;color:var(--text2);width:160px;text-align:right">Energia Elétrica<span style="color:var(--green);font-size:10px;margin-left:6px">🛡️PERENE</span></span>
+        </div><div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:700;width:70px">SAPR11</span>
+          <div style="flex:1">
+            <div style="background:var(--bg4);border-radius:4px;height:20px;overflow:hidden">
+              <div style="background:var(--green);height:100%;width:0%;border-radius:4px;display:flex;align-items:center;padding-left:6px">
+                <span style="font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--bg)">0.0%</span>
+              </div>
+            </div>
+          </div>
+          <span style="font-size:11px;color:var(--text2);width:160px;text-align:right">Saneamento<span style="color:var(--green);font-size:10px;margin-left:6px">🛡️PERENE</span></span>
+        </div><div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:700;width:70px">MATD3</span>
+          <div style="flex:1">
+            <div style="background:var(--bg4);border-radius:4px;height:20px;overflow:hidden">
+              <div style="background:var(--green);height:100%;width:0%;border-radius:4px;display:flex;align-items:center;padding-left:6px">
+                <span style="font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--bg)">0.0%</span>
+              </div>
+            </div>
+          </div>
+          <span style="font-size:11px;color:var(--text2);width:160px;text-align:right">Saúde<span style="color:var(--green);font-size:10px;margin-left:6px">🛡️PERENE</span></span>
+        </div></div>
+    <div class="analysis-section" style="margin-bottom:20px"><h4>🔍 Diagnóstico de Composição</h4><p>A carteira atual é extremamente concentrada, com 100% do valor atual em VALE3 (mineração, cíclico). Os outros ativos (CMIG4, SAPR11, MATD3) aparecem com valor zero, o que indica uma falha na atualização dos dados ou uma perda total, mas seus setores são perenes e desejáveis. Há uma ausência total de FIIs e ETFs, e a diversificação setorial é inexistente. O peso em ativos cíclicos é de 100% (considerando VALE3 como único ativo com valor), muito acima do máximo de 30% recomendado para um perfil moderado. O DY médio ponderado é 0% (devido aos dados zerados), mas mesmo com VALE3, a concentração é um problema maior.</p></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:16px"><div class="analysis-col negative"><h4>📌 Setores Faltantes</h4><p>Bancário, Saneamento (sub-representado devido a dados zerados), Energia Elétrica (sub-representado devido a dados zerados), Seguros, Telecomunicações, Consumo Essencial</p></div><div class="analysis-col" style="border-left:3px solid var(--red)"><h4 style="color:var(--red)">⚠️ Sobre-representados</h4><p>Mineração</p></div><div class="analysis-col positive"><h4>💡 Classes Faltantes</h4><p>FIIs, ETFs, Hedge (ouro, dólar), Internacional</p></div></div><div class="analysis-section macro"><h4>📋 Plano de Diversificação (3-6 meses)</h4><p>Nos próximos 3-6 meses, o plano é:
+1.  **Reduzir VALE3:** Vender gradualmente parte da posição em VALE3 para realocar em ativos perenes.
+2.  **Construir FIIs:** Iniciar e aumentar posições em FIIs como MXRF11 e KNRI11 para renda mensal isenta e diversificação imobiliária.
+3.  **Fortalecer Perenes:** Aumentar posições em CMIG4 e SAPR11 (assumindo que os dados de preço serão corrigidos) e iniciar posições em bancos (ITUB4, BBAS3) e outras elétricas (TAEE11).
+4.  **Considerar ETFs:** Adicionar um ETF de dividendos (DIVD11) para diversificação ampla e simplificada.
+5.  **Meta:** Atingir 8-15 ativos, com no máximo 20% por ativo e 30% por setor, e peso de cíclicos abaixo de 30%.</p></div>
+  </div>
+
+  <h2 style="font-family:'JetBrains Mono',monospace;font-size:20px;margin-bottom:16px">🏦 Análise por Ativo</h2>
+  
+        <div class="ativo-card">
+          <div class="ativo-header">
+            <div><h3 style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700">VALE3</h3>
+            <span style="color:var(--text2);font-size:13px">VALE3</span></div>
+            <div class="recomendacao" style="background:#ef444420;color:#ef4444;border:1px solid #ef444440;padding:6px 16px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700">↓ REDUZIR</div>
+          </div>
+          <div class="ativo-metrics">
+            <div class="metric-box"><span class="metric-label">Preço Atual</span><span class="metric-value">R$ 83.55</span><span class="metric-sub" style="color:#22c55e">+0.66% hoje</span></div>
+            <div class="metric-box"><span class="metric-label">Resultado</span><span class="metric-value" style="color:#22c55e">R$ +28.35</span><span class="metric-sub" style="color:#22c55e">+5.09%</span></div>
+            <div class="metric-box"><span class="metric-label">Qtd × PM</span><span class="metric-value">7 × R$ 79.50</span><span class="metric-sub">Invest: R$ 556.50</span></div>
+            <div class="metric-box"><span class="metric-label">Score / DY</span><span class="metric-value">6/10</span><span class="metric-sub">DY: 0.0% | P/L: 25.9</span></div>
+          </div>
+          <div style="margin-bottom:16px">
+            <div class="analysis-section"><h4>📊 Análise</h4><p>VALE3 é um ativo do setor de mineração, intrinsecamente cíclico e exposto à volatilidade das commodities. Embora as notícias recentes apontem para dividendos extraordinários e um bom Dividend Yield (calculado em ~6.55% nos últimos 12 meses com base nos dados fornecidos), a concentração de 100% da carteira neste ativo é um risco inaceitável para um perfil moderado focado em renda passiva. A mudança de estratégia da empresa e a guerra no Irã adicionam incertezas. A metodologia Suno prioriza setores perenes para dividendos consistentes.</p></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div class="analysis-col positive"><h4>✅ Pontos Positivos</h4><p>Potencial de dividendos extraordinários; empresa global com forte posição de mercado; bom Dividend Yield atual.</p></div>
+              <div class="analysis-col negative"><h4>⚠️ Riscos</h4><p>Alta volatilidade devido à dependência do preço do minério de ferro; riscos geopolíticos; concentração excessiva na carteira; potencial de redução de dividendos em ciclos de baixa das commodities.</p></div>
+            </div>
+            <div class="analysis-section macro"><h4>🌍 Impacto Macro</h4><p>A guerra no Irã pode impulsionar preços de commodities, beneficiando a Vale no curto prazo. No entanto, a Selic alta e a inflação podem pressionar custos e o apetite por risco em ativos cíclicos no longo prazo.</p></div>
+          </div>
+          <div class="dividendos-section"><h4>💰 Últimos Dividendos</h4><div><div class="div-row"><span class="div-date">2026-03-04</span><span class="div-val">R$ 1.5695</span><span class="div-type">JCP</span></div><div class="div-row"><span class="div-date">2026-03-04</span><span class="div-val">R$ 0.7681</span><span class="div-type">DIVIDENDO</span></div><div class="div-row"><span class="div-date">2026-01-07</span><span class="div-val">R$ 1.2441</span><span class="div-type">DIVIDENDO</span></div><div class="div-row"><span class="div-date">2025-09-03</span><span class="div-val">R$ 1.8954</span><span class="div-type">JCP</span></div><div class="div-row"><span class="div-date">2025-03-14</span><span class="div-val">R$ 2.1418</span><span class="div-type">DIVIDENDO</span></div></div></div>
+        </div>
+        <div class="ativo-card">
+          <div class="ativo-header">
+            <div><h3 style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700">CMIG4</h3>
+            <span style="color:var(--text2);font-size:13px">CMIG4</span></div>
+            <div class="recomendacao" style="background:#22c55e20;color:#22c55e;border:1px solid #22c55e40;padding:6px 16px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700">↑ AUMENTAR</div>
+          </div>
+          <div class="ativo-metrics">
+            <div class="metric-box"><span class="metric-label">Preço Atual</span><span class="metric-value">R$ 0.00</span><span class="metric-sub" style="color:#22c55e">+0.00% hoje</span></div>
+            <div class="metric-box"><span class="metric-label">Resultado</span><span class="metric-value" style="color:#ef4444">R$ -204.00</span><span class="metric-sub" style="color:#ef4444">-100.00%</span></div>
+            <div class="metric-box"><span class="metric-label">Qtd × PM</span><span class="metric-value">17 × R$ 12.00</span><span class="metric-sub">Invest: R$ 204.00</span></div>
+            <div class="metric-box"><span class="metric-label">Score / DY</span><span class="metric-value">8/10</span><span class="metric-sub">DY: 0.0% | P/L: 0.0</span></div>
+          </div>
+          <div style="margin-bottom:16px">
+            <div class="analysis-section"><h4>📊 Análise</h4><p>CMIG4 atua no setor de energia elétrica, um setor perene e defensivo, ideal para investidores focados em dividendos. As notícias recentes confirmam a aprovação de proventos e um potencial Dividend Yield de 15% (conforme Nord Investimentos), o que é excelente. Embora os dados da carteira mostrem &#x27;preco_atual&#x27; zerado, assumimos que é um erro de dados e que a empresa mantém sua solidez. É um ativo que se encaixa perfeitamente na metodologia Barsi de setores perenes e dividendos crescentes. Aumentar a posição em CMIG4 ajudaria a diversificar e equilibrar a carteira.</p></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div class="analysis-col positive"><h4>✅ Pontos Positivos</h4><p>Setor perene e defensivo; histórico de bons dividendos; potencial de alto Dividend Yield; receita previsível.</p></div>
+              <div class="analysis-col negative"><h4>⚠️ Riscos</h4><p>Interferência política (empresa estatal); necessidade de investimentos pesados em infraestrutura; dados de preço atual zerados na carteira (assumido como erro de dados).</p></div>
+            </div>
+            <div class="analysis-section macro"><h4>🌍 Impacto Macro</h4><p>Setor menos sensível a flutuações econômicas. A Selic alta pode impactar o custo da dívida, mas a previsibilidade da receita mitiga parte do risco.</p></div>
+          </div>
+          <div class="dividendos-section"><h4>💰 Últimos Dividendos</h4><div><div class="div-row"><span style="color:var(--text2);font-style:italic">Sem dados recentes</span></div></div></div>
+        </div>
+        <div class="ativo-card">
+          <div class="ativo-header">
+            <div><h3 style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700">SAPR11</h3>
+            <span style="color:var(--text2);font-size:13px">SAPR11</span></div>
+            <div class="recomendacao" style="background:#22c55e20;color:#22c55e;border:1px solid #22c55e40;padding:6px 16px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700">↑ AUMENTAR</div>
+          </div>
+          <div class="ativo-metrics">
+            <div class="metric-box"><span class="metric-label">Preço Atual</span><span class="metric-value">R$ 0.00</span><span class="metric-sub" style="color:#22c55e">+0.00% hoje</span></div>
+            <div class="metric-box"><span class="metric-label">Resultado</span><span class="metric-value" style="color:#ef4444">R$ -122.61</span><span class="metric-sub" style="color:#ef4444">-100.00%</span></div>
+            <div class="metric-box"><span class="metric-label">Qtd × PM</span><span class="metric-value">3 × R$ 40.87</span><span class="metric-sub">Invest: R$ 122.61</span></div>
+            <div class="metric-box"><span class="metric-label">Score / DY</span><span class="metric-value">8/10</span><span class="metric-sub">DY: 0.0% | P/L: 0.0</span></div>
+          </div>
+          <div style="margin-bottom:16px">
+            <div class="analysis-section"><h4>📊 Análise</h4><p>SAPR11 (Sanepar) é do setor de saneamento, outro setor perene e essencial, com características de monopólio natural e receitas previsíveis, alinhado com a metodologia Barsi. Assim como CMIG4, os dados da carteira mostram &#x27;preco_atual&#x27; zerado, o que assumimos ser um erro. Aumentar a exposição a SAPR11 é crucial para diversificar a carteira para um setor defensivo e com histórico de bons pagamentos de dividendos, contribuindo para a estabilidade e renda passiva do investidor.</p></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div class="analysis-col positive"><h4>✅ Pontos Positivos</h4><p>Setor perene e defensivo; receitas previsíveis; potencial de dividendos consistentes; vantagens competitivas de escala.</p></div>
+              <div class="analysis-col negative"><h4>⚠️ Riscos</h4><p>Interferência política (empresa estatal); necessidade de investimentos em infraestrutura; dados de preço atual zerados na carteira (assumido como erro de dados).</p></div>
+            </div>
+            <div class="analysis-section macro"><h4>🌍 Impacto Macro</h4><p>Setor resiliente a crises econômicas. A Selic alta pode impactar o custo da dívida e o financiamento de projetos, mas a demanda por serviços é constante.</p></div>
+          </div>
+          <div class="dividendos-section"><h4>💰 Últimos Dividendos</h4><div><div class="div-row"><span style="color:var(--text2);font-style:italic">Sem dados recentes</span></div></div></div>
+        </div>
+        <div class="ativo-card">
+          <div class="ativo-header">
+            <div><h3 style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700">MATD3</h3>
+            <span style="color:var(--text2);font-size:13px">MATD3</span></div>
+            <div class="recomendacao" style="background:#f59e0b20;color:#f59e0b;border:1px solid #f59e0b40;padding:6px 16px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700">→ MANTER</div>
+          </div>
+          <div class="ativo-metrics">
+            <div class="metric-box"><span class="metric-label">Preço Atual</span><span class="metric-value">R$ 0.00</span><span class="metric-sub" style="color:#22c55e">+0.00% hoje</span></div>
+            <div class="metric-box"><span class="metric-label">Resultado</span><span class="metric-value" style="color:#ef4444">R$ -115.60</span><span class="metric-sub" style="color:#ef4444">-100.00%</span></div>
+            <div class="metric-box"><span class="metric-label">Qtd × PM</span><span class="metric-value">20 × R$ 5.78</span><span class="metric-sub">Invest: R$ 115.60</span></div>
+            <div class="metric-box"><span class="metric-label">Score / DY</span><span class="metric-value">7/10</span><span class="metric-sub">DY: 0.0% | P/L: 0.0</span></div>
+          </div>
+          <div style="margin-bottom:16px">
+            <div class="analysis-section"><h4>📊 Análise</h4><p>MATD3 (Mater Dei) atua no setor de saúde, que é considerado perene e menos cíclico. Embora não seja um pagador de dividendos tão tradicional quanto energia ou saneamento, o setor de saúde tem demanda constante. Com os dados de preço atual zerados, é difícil fazer uma análise precisa de valuation ou Dividend Yield. No momento, a recomendação é manter a posição, mas priorizar aportes em ativos com maior foco em dividendos e setores mais defensivos para equilibrar a carteira.</p></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div class="analysis-col positive"><h4>✅ Pontos Positivos</h4><p>Setor perene com demanda crescente; potencial de crescimento a longo prazo.</p></div>
+              <div class="analysis-col negative"><h4>⚠️ Riscos</h4><p>Regulamentação do setor; concorrência; dados de preço atual zerados na carteira (assumido como erro de dados); histórico de dividendos pode não ser tão robusto quanto outros setores perenes.</p></div>
+            </div>
+            <div class="analysis-section macro"><h4>🌍 Impacto Macro</h4><p>Setor resiliente, mas pode ser impactado por custos de insumos e mão de obra. A Selic alta pode dificultar expansões via endividamento.</p></div>
+          </div>
+          <div class="dividendos-section"><h4>💰 Últimos Dividendos</h4><div><div class="div-row"><span style="color:var(--text2);font-style:italic">Sem dados recentes</span></div></div></div>
+        </div>
+
+  <h2 style="font-family:'JetBrains Mono',monospace;font-size:20px;margin:32px 0 16px;background:linear-gradient(135deg,var(--green),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent">🎯 Oportunidades de Mercado</h2>
+  <div style="margin-bottom:24px"><h3 style="font-family:'JetBrains Mono',monospace;font-size:16px;color:#22c55e;margin-bottom:12px">🏆 Top 3 — Comprar Agora</h3><div class="top3-grid"><div class="top3-card">
+                  <span class="top3-rank">#1</span>
+                  <div class="top3-ticker">MXRF11</div>
+                  <div class="top3-tipo">FII</div>
+                  <div class="top3-motivo">Renda mensal isenta e diversificação imediata.</div>
+                  <div class="top3-valor">Sugestão: R$ 150</div>
+                </div><div class="top3-card">
+                  <span class="top3-rank">#2</span>
+                  <div class="top3-ticker">ITUB4</div>
+                  <div class="top3-tipo">Ação</div>
+                  <div class="top3-motivo">Banco perene e sólido para diversificação.</div>
+                  <div class="top3-valor">Sugestão: R$ 150</div>
+                </div><div class="top3-card">
+                  <span class="top3-rank">#3</span>
+                  <div class="top3-ticker">CMIG4</div>
+                  <div class="top3-tipo">Ação</div>
+                  <div class="top3-motivo">Setor perene de energia com alto DY potencial.</div>
+                  <div class="top3-valor">Sugestão: R$ 200</div>
+                </div></div></div><div style="margin-bottom:24px"><h3 style="font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--accent);margin-bottom:12px">📈 Ações Recomendadas</h3><div class="opp-grid"><div class="opp-card">
+                      <div class="opp-card-header">
+                        <span class="opp-ticker">ITUB4</span>
+                        <span class="opp-badge alta">ALTA</span>
+                      </div>
+                      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Itau Unibanco</div>
+                      <div class="opp-metrics">
+                        <div class="opp-metric"><span class="label">Preço</span><span class="val">R$ 43.30</span></div>
+                        <div class="opp-metric"><span class="label">DY</span><span class="val" style="color:var(--green)">4.5%</span></div>
+                        <div class="opp-metric"><span class="label">Score</span><span class="val">9/10</span></div>
+                      </div>
+                      <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:8px">O Itaú é um banco sólido, com forte marca, escala e histórico de lucros consistentes. O setor bancário é perene e resiliente, sendo um pilar para uma carteira de dividendos. Embora o DY dos últimos 12 meses esteja ligeiramente abaixo de 6% (4.48%), o Itaú é um pagador de dividendos consistente, com JCPs mensais e dividendos anuais, e possui um P/L razoável (11.03). É uma excelente opção para diversificar a carteira e adicionar um setor perene e de alta qualidade.</div>
+                      <div style="font-size:12px;color:var(--yellow);background:#f59e0b08;padding:8px;border-radius:6px">⚠️ Regulamentação bancária; concorrência acirrada; inadimplência em cenários econômicos adversos; impacto da Selic alta no custo de captação.</div>
+                    </div><div class="opp-card">
+                      <div class="opp-card-header">
+                        <span class="opp-ticker">BBAS3</span>
+                        <span class="opp-badge alta">ALTA</span>
+                      </div>
+                      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Banco do Brasil</div>
+                      <div class="opp-metrics">
+                        <div class="opp-metric"><span class="label">Preço</span><span class="val">R$ 60.00</span></div>
+                        <div class="opp-metric"><span class="label">DY</span><span class="val" style="color:var(--green)">9.0%</span></div>
+                        <div class="opp-metric"><span class="label">Score</span><span class="val">9/10</span></div>
+                      </div>
+                      <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:8px">O Banco do Brasil é uma empresa sólida, com forte presença nacional e um histórico robusto de pagamento de dividendos, frequentemente superando o critério de 6% do Método Bazin. Sendo um banco, se encaixa no setor perene do Método Barsi. Sua valuation costuma ser atrativa em comparação com pares privados, e a gestão tem se mostrado eficiente. É uma excelente adição para diversificar o setor bancário e aumentar o DY médio da carteira.</div>
+                      <div style="font-size:12px;color:var(--yellow);background:#f59e0b08;padding:8px;border-radius:6px">⚠️ Interferência política (empresa estatal); concorrência; inadimplência.</div>
+                    </div><div class="opp-card">
+                      <div class="opp-card-header">
+                        <span class="opp-ticker">TAEE11</span>
+                        <span class="opp-badge alta">ALTA</span>
+                      </div>
+                      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Taesa</div>
+                      <div class="opp-metrics">
+                        <div class="opp-metric"><span class="label">Preço</span><span class="val">R$ 35.00</span></div>
+                        <div class="opp-metric"><span class="label">DY</span><span class="val" style="color:var(--green)">10.0%</span></div>
+                        <div class="opp-metric"><span class="label">Score</span><span class="val">9/10</span></div>
+                      </div>
+                      <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:8px">Taesa atua no setor de transmissão de energia elétrica, um dos mais defensivos e previsíveis da economia, com receitas reajustadas pela inflação e contratos de longo prazo. É um clássico da metodologia Barsi e um dos favoritos para dividendos, com um histórico de Dividend Yield consistentemente acima de 6%. Adicionar TAEE11 traria maior estabilidade e previsibilidade de renda passiva para a carteira.</div>
+                      <div style="font-size:12px;color:var(--yellow);background:#f59e0b08;padding:8px;border-radius:6px">⚠️ Atrasos em projetos de expansão; eventos regulatórios; endividamento para novos projetos.</div>
+                    </div></div></div><div style="margin-bottom:24px"><h3 style="font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--accent);margin-bottom:12px">🏢 FIIs Recomendados</h3><div class="opp-grid"><div class="opp-card">
+                      <div class="opp-card-header">
+                        <span class="opp-ticker">MXRF11</span>
+                        <span class="opp-badge alta">ALTA</span>
+                      </div>
+                      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Maxi Renda FII</div>
+                      <div class="opp-metrics">
+                        <div class="opp-metric"><span class="label">Preço</span><span class="val">R$ 10.50</span></div>
+                        <div class="opp-metric"><span class="label">DY</span><span class="val" style="color:var(--green)">11.5%</span></div>
+                        <div class="opp-metric"><span class="label">Score</span><span class="val">8/10</span></div>
+                      </div>
+                      <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:8px">MXRF11 é um FII de papel com alta liquidez e um histórico de pagamentos mensais consistentes e isentos de IR, ideal para o objetivo de renda passiva do investidor. Seu preço acessível (cerca de R$10) permite aportes fracionados com os R$500 mensais. É uma excelente forma de diversificar a carteira e começar a construir uma base de renda mensal.</div>
+                      <div style="font-size:12px;color:var(--yellow);background:#f59e0b08;padding:8px;border-radius:6px">⚠️ Risco de crédito dos CRIs; sensibilidade à taxa de juros (Selic); gestão do portfólio.</div>
+                    </div><div class="opp-card">
+                      <div class="opp-card-header">
+                        <span class="opp-ticker">KNRI11</span>
+                        <span class="opp-badge media">MEDIA</span>
+                      </div>
+                      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Kinea Renda Imobiliária</div>
+                      <div class="opp-metrics">
+                        <div class="opp-metric"><span class="label">Preço</span><span class="val">R$ 165.00</span></div>
+                        <div class="opp-metric"><span class="label">DY</span><span class="val" style="color:var(--green)">8.5%</span></div>
+                        <div class="opp-metric"><span class="label">Score</span><span class="val">8/10</span></div>
+                      </div>
+                      <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:8px">KNRI11 é um FII de tijolo diversificado em galpões logísticos e escritórios, com imóveis de alta qualidade e inquilinos sólidos. Oferece boa diversificação setorial dentro do mercado imobiliário e pagamentos mensais. Embora o preço seja mais elevado, é um ativo de alta qualidade para compor a carteira de longo prazo e trazer exposição a imóveis físicos.</div>
+                      <div style="font-size:12px;color:var(--yellow);background:#f59e0b08;padding:8px;border-radius:6px">⚠️ Vacância dos imóveis; inadimplência dos inquilinos; flutuações do mercado imobiliário.</div>
+                    </div></div></div><div style="margin-bottom:24px"><h3 style="font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--accent);margin-bottom:12px">📦 ETFs Recomendados</h3><div class="opp-grid"><div class="opp-card">
+                      <div class="opp-card-header">
+                        <span class="opp-ticker">DIVD11</span>
+                        <span class="opp-badge media">MEDIA</span>
+                      </div>
+                      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">IT NOW IDIV Dividendos</div>
+                      <div class="opp-metrics">
+                        <div class="opp-metric"><span class="label">Preço</span><span class="val">R$ 65.00</span></div>
+                        <div class="opp-metric"><span class="label">DY</span><span class="val" style="color:var(--green)">7.0%</span></div>
+                        <div class="opp-metric"><span class="label">Score</span><span class="val">7/10</span></div>
+                      </div>
+                      <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:8px">DIVD11 é um ETF que replica o índice IDIV (Índice de Dividendos), oferecendo diversificação instantânea em uma cesta de empresas com bom histórico de pagamento de dividendos. É uma forma eficiente de obter exposição a várias empresas pagadoras de dividendos sem a necessidade de escolher e gerenciar cada ativo individualmente, ideal para complementar a carteira e reduzir o risco de concentração.</div>
+                      <div style="font-size:12px;color:var(--yellow);background:#f59e0b08;padding:8px;border-radius:6px">⚠️ Risco de mercado (segue o índice); taxa de administração; não isenção de IR sobre os dividendos (reinvestidos no próprio fundo).</div>
+                    </div></div></div>
+
+  <div class="sugestao"><h3>💡 Sugestão de Aporte Mensal (R$ 500)</h3><p>Com o aporte de R$ 500/mês, a prioridade é diversificar e reduzir a concentração em VALE3, focando em setores perenes e FIIs. Sugiro a seguinte alocação para o próximo aporte:
+- **R$ 150 em MXRF11:** Para iniciar a posição em FIIs, garantindo renda mensal isenta de IR e diversificação imediata.
+- **R$ 150 em ITUB4:** Para adicionar um banco sólido e perene à carteira, diversificando o risco e garantindo consistência nos dividendos.
+- **R$ 200 em CMIG4:** Para aumentar a posição em um setor perene (energia elétrica) com alto potencial de dividendos, aproveitando a sub-representação atual e as notícias positivas. (Assumindo que o preço atual de CMIG4 não é zero e que o investidor deseja aumentar a posição neste ativo estratégico).
+
+Nos próximos meses, o foco deve ser em continuar a reduzir a exposição a VALE3 (se possível, vendendo parte para realocar) e construir posições em SAPR11, BBAS3, TAEE11 e KNRI11, até atingir a meta de 8-15 ativos bem diversificados.</p></div>
+
+  <div class="grid-bottom">
+    <div class="side-card"><h3>⚡ Alertas</h3><div class="alerta-item">⚡ ALERTA MÁXIMO: Concentração de 100% em VALE3 é extremamente arriscada para um perfil moderado. É urgente diversificar.</div><div class="alerta-item">⚡ ALERTA: Os dados de &#x27;preco_atual&#x27; zerados para CMIG4, SAPR11 e MATD3 são críticos e precisam ser verificados. Assumimos que são erros de dados para a análise.</div><div class="alerta-item">⚡ ALERTA: A carteira não possui FIIs, o que é uma lacuna para um investidor focado em renda passiva mensal e isenta de IR.</div><div class="alerta-item">⚡ ALERTA: A exposição a setores cíclicos é de 100% (considerando VALE3 como único ativo com valor), muito acima do recomendado para o perfil.</div></div>
+    <div class="side-card"><h3>📅 Próximos Eventos</h3><div class="evento-item">📅 Decisões sobre juros do Banco Central do Brasil e EUA nesta quarta (18 Mar 2026), com potencial impacto na Selic e no mercado de ações.</div><div class="evento-item">📅 Boletim Focus: Acompanhar as próximas projeções para Selic e IPCA, que podem influenciar a estratégia de alocação.</div><div class="evento-item">📅 Resultados trimestrais das empresas da carteira e oportunidades, especialmente CMIG4 e SAPR11, para verificar a saúde financeira e dividendos.</div></div>
+  </div>
+
+  <div class="side-card" style="margin-top:20px"><h3>📰 Notícias Relevantes</h3><a class="news-item" href="https://news.google.com/rss/articles/CBMirwFBVV95cUxPTVlleWRLWGpVd3IwVXItcXN1WWZyWU9YMEpjV08xczVaR1oyY0JsVjJaZG13VFYwa1Uzcl9fMG1tRGxHTEZCUGl3ZzFoUHVMYXB5Nm15c1lPM3N1cHdsZi1EazhqdmRpR0V2eE9OUFBUa0pKRm9NRHpaLWJuY21RQWYzeUtzOC1FRktTM2V6QmxkVW1tVG5DZm5USU1HOGtDYjVrY2xuRC05Tld4TENR?oc=5" target="_blank"><span class="news-title">Mercado eleva previsão da inflação para 4,31% este ano - Agência Brasil</span><span class="news-date">Mon, 30 Mar 2026</span></a><a class="news-item" href="https://news.google.com/rss/articles/CBMiwgFBVV95cUxNb1FQVnpNcldnWWFwVVRaZk9iVlZ5Y0NLVlBtSXozQmtRMjVBSlNZV3JEZUM2eU0wYWZqTmRxSXlmWkk1aW9VNzZuYlh5d28yZGVBU2cxQVJTQl95VGViZ09obXhSZzZScE51NFc3eFc1U2gydU9nWVlIcDhrZm14Q0lRWVVRdlRhRkF3YU8zMURrZDB6OVpQdzNpc3ZJYjMxdWNLQ0hTZzk3UEwzb3AzTlhpRm5NOHZYYmQtSTIwN0lVQQ?oc=5" target="_blank"><span class="news-title">Boletim Focus aponta alta na previsão da Selic - Agência Brasil</span><span class="news-date">Mon, 30 Mar 2026</span></a><a class="news-item" href="https://news.google.com/rss/articles/CBMivwFBVV95cUxNNVB4Tk5wTVFxR1ZQMVBfSC1tWDZhWVZLaVY5V2tYZU4weEkyTnVtU2JtTC1TOHlyYmtJdEszb2pzY0ljOVEwRDA0WU00a0pPZmI0QTRsblp6dWhxY29sdDhjbk5vY2xpM1RmSnZ4cVdUUEVHSEdwOGJmRlhxWEJPSmMwNi14NUcwY25iMlMycnFQa1lCUGp2QkRpS1I0TE1MY01iQl9vQ1pKX2F4TGV6UnB6UW5OaERuaEM0SEpBRQ?oc=5" target="_blank"><span class="news-title">Corte de apenas 0,25 na Selic deixaria o Brasil com a 2ª maior taxa real do mundo - CartaCapital</span><span class="news-date">Wed, 18 Mar 2026</span></a><a class="news-item" href="https://news.google.com/rss/articles/CBMiygFBVV95cUxPYnlETy03dU5rMkRwcmRqRGNoUkpfSTN2dEpIeUdLSjhEa0UwRjFYVHV4d0FHRExST0ZnOWY0UkFQRnUyVHRYcUJvVWVrZTJUNVhjY2NGVHdERU9HUFVmc0RfM3ozTC1UUkhyNWZWLUZTSzBycC1QdFFTN1NoR25qUkZyd3hhYTMyOC1Fd25WX2s4MWcwOG1Lbzd4MjQzTGJ0cUZXeWFmbEloYVpReEZEaDBaV0NjZ21iSjRoQU9xRmp3SHNvOVFtT2J30gHPAUFVX3lxTE1BZTBnenVwS2c1V1NkeUc1SEJ1Ykd0eERuYUZneHpfamFoSlF2dlUxM04tcWxBWjlfU0hLdEoyTzJOTEVNN3c0WWNiaXFlU0xnUnlaNkNXNkhqb09lbElKdjlhbFZsV2stSzRFQlFMdi1jMDVNRkthT21YVlBla3IyNElQRkVNWFFhVGhzYi1uVUNmeS04eVdpR2JTbWpvRU5ZUnNpeG12RkJ6bUxkLTd1UGl5bnE3RXFQU3JmTjRta1BpdURSaUtOcWRMcHZUUQ?oc=5" target="_blank"><span class="news-title">BCs de Brasil e EUA decidem sobre juros nesta quarta com guerra no Irã em foco - folha.uol.com.br</span><span class="news-date">Wed, 18 Mar 2026</span></a><a class="news-item" href="https://news.google.com/rss/articles/CBMie0FVX3lxTE1yLXcyak5WTnBoZHlLcWJTdlNlY0NYTUFCMHpKaEtJQ1BzT0xVSFp2LVJTODMzM1hhVGw5ZXp4VFZQRldxbzZad0NoY09zUkpEMUdiMVBWYk9hRUs3d1pjV2JuTXNscHFFbkhnUDFBUGoyMzdHSU1RUTQyY9IBgAFBVV95cUxQNkpLMDh0aEE5YnJXNEFadXViV2tOV0ZobFFROENpcDJDcmVfblJ4dTN2czF2ZUc1MURqaFlmNTh6d2l4YnFZNEx5ZTJLYWpZM0J6MndYenZuY3gtczh6RGxHZF9vR1BIalY5a1A3ZEU1ekpPNjlobl95bG9QTndlZA?oc=5" target="_blank"><span class="news-title">Boletim Focus: mercado eleva projeção da Selic e reduz estimativa do dólar para 2026 - InfoMoney</span><span class="news-date">Mon, 09 Mar 2026</span></a><a class="news-item" href="https://news.google.com/rss/articles/CBMigwJBVV95cUxNQXE2QlVfT3hyMGp1RkFwc1hpS1BhM19FNTdvOW9VeG5kdWdib3AxOHlEekpkV0JSeTYyMTRPTWI4cWRxaktPTEo4UGtiM1ZTNFRBZXJVeWt4MkRCMnFPbjd0LTlvcU1ONjFZMHBwczh3YVVwQjVTeTR0dmN5b21nUWJUM0hOemlyV2x5OS1tWWR1cGdBdHNVOUVVQXdJbE15SEdPcXJWVlVMS1U0b1E0bUJaMlBVbDU4aW9sNGJGM1Y0N2d3M0lUaGVnOFB1U2Q3QWlPcUdERGlUWkZ1ZHBaX3U1Y010STRTRDZ6bVI2Y21XN2w5cHV6N1hKZ2xmcnhEckh3?oc=5" target="_blank"><span class="news-title">Vale (VALE3) tropeça e ação cai 6,8% em março, mas mineradora está longe do fim da linha com dividendos extraodinários à frente - Seu Dinheiro</span><span class="news-date">Tue, 31 Mar 2026</span></a><a class="news-item" href="https://news.google.com/rss/articles/CBMipwFBVV95cUxOamFoQ09GcVJwVzVwWGlZaXlSREdaSktQUF9QTVNYSDBDMUJrNVNINnlXXzBFWkFxNTg3dGhsQzI3QVN1TkVDS1VzY0RJNElJVG55M2h6QmlWY3d5bjY1a0dGYkxpLVJyRUVQN1V3VWtDaUlzS01ha0Y3c0xmYTBfYkR4ZTBpVm9QcnZFQzM0dWZzYUxsNFY2LWtXUk96dHVuNk04NjRfRQ?oc=5" target="_blank"><span class="news-title">Vale (VALE3) muda estratégia e acende alerta: ação ainda vale a pena em 2026? - arevista.com.br</span><span class="news-date">Sat, 04 Apr 2026</span></a><a class="news-item" href="https://news.google.com/rss/articles/CBMi_AFBVV95cUxQVjJ3aDN3VUdHWlBJUThKcWoyUWN1WHd5Z3dqV1hDSkF4dWJfTUFOWDBRRm5tbHBZVGpmOWZheTNjOGNGUFpRSHRYcXlBQWk4dXljcHpweFdGVmRMWGNFc2lmb3RnU1YyRFZydEVXMmNPRjJSZGkzcG1IOEFURUMxYmtCX0ZWTUxxR1Y3Y0R3NjA5M3BEVmMwWGgtNlc3ajRySnZYbVdTMk9MVkg3MFRIcURpWEFVSWMtamZYdkZrMWJoRXhHV0xuRTBSWUhNMlJwUkM0M0Z4dEdoYzNfTkpnVUJNTnFDXzNPX1VodERWSWtYRXBLSDRjbU5haTLSAYsCQVVfeXFMT3QzOXg3YTVtYllFcEF6dDI1VlJVM0FLSUd5WU5VVWJ4UloteG1NeUtrdmFWR3J4V01xOTBZZTQtbXBTQVk0REhHdUFrZ1NzTjY5bFFnTXl1ek1IaHIxSXA1al9xZDhJcWtQOTFLS0VYclg3dHNsbkRpSXNGbERSLVQ4eEs3ajVsM3F2NU5wZzdiVkhXY1JkRGNUMjJpSlRzVkNJQ3NNYlhOeEFWN21WMi1RYU94WG5IbHpiVUVuX0lfTVpfUVpxc2FJdmJGOWdBYWV3SXNlZGlMZzFkQ2FFNFd0R0lCNEJuU2VuUWlTUDNnZ2NjOENvVk1RZW5QVjU0a2pkS29sMzhZcWRn?oc=5" target="_blank"><span class="news-title">Vale (VALE3) pode pagar dividendos extras e vira destaque em meio à guerra no Irã - Valor Investe</span><span class="news-date">Wed, 25 Mar 2026</span></a><a class="news-item" href="https://news.google.com/rss/articles/CBMirwFBVV95cUxQOFdoVnJyMjVaY1BneTFZX3pxVmRrU2p5YmRFYm9EblRac2dIMVNIZGNVSWJ0T3F0d1U0M0pHT3JJLXNkeHVpY28yMnh0bUwxUWNfTHRpMkVTSlV0Rm1ZRUkxdng0RXdyeUt3RS1ORlVWdDVOY0Z4cUt2UzFvOEhzQ2tpVzl4TVNnTFdxSFdXdGxONGtxRFdqbi1HaXlwaUllQjQtb0F3TkY4SHJSbHNZ0gG0AUFVX3lxTFBDSXNLVzJNTXI5LVExV3gzNUdSYzQ3NkNLS0RmOEhRYjNCZk1FTlQ1TEt0T0E3Snc5QlBVWjRIYlNCWVNOa2lkMXhtTVBxQlVGNjViSUNra2JGZVVPWWhrYW8yZzFXUFFOcVA4M2E1RG9SSHd3cVBsZVVNZE9LVXRveXdmdGpMN21UNkdveUtGS1NzdzJocVE3SnRUVDF2Nm4zOW9Dc2RBUWUwZm05S29XMVF1MQ?oc=5" target="_blank"><span class="news-title">Vale (VALE3) pode pagar dividendos extraordinários em 2026, diz BofA - Investidor10</span><span class="news-date">Wed, 11 Mar 2026</span></a><a class="news-item" href="https://news.google.com/rss/articles/CBMidkFVX3lxTFBWUGx3OTRRbVRyLWJXclp6Vl9XdUloQl9rQzF6cHViRFhKMHg0bUtMSHdsNkpIeXNFRHVsZjZTZm5KemZkNkg5OGNocXF2RUdpeUNjTmt6UHdxREFmWGUzaFRjZWlOYk1UWVB6MzZJakpIZ0UtTkHSAXtBVV95cUxOdTB6UVZSZ0NfcTktSGg1Zkp1QWVRbjNJeXFUWmNGbHMyQ01Db1lLOGl4ZDVuNVJrbS05dWRaM1V4V1ZQVm80M09za2tLaVptUkxIeWtGbmplWjNBYlN6WXNITjVGRWFaTWhJVjJmV2JNeFhEdUU2djVnLWM?oc=5" target="_blank"><span class="news-title">Vale (VALE3) rompe recorde histórico. Ainda vale a pena entrar? - Nord Investimentos</span><span class="news-date">Wed, 14 Jan 2026</span></a></div>
+
+  <div class="fontes">
+    <h3>📋 Fontes de Dados</h3>
+    <div class="fonte-item"><span class="fonte-badge">COTAÇÕES</span> <a href="https://brapi.dev">brapi.dev</a> — Cotações, dividendos, fundamentalista</div>
+    <div class="fonte-item"><span class="fonte-badge">CÂMBIO</span> <a href="https://brapi.dev/docs/moedas">brapi.dev/currency</a> — USD/BRL, EUR/BRL</div>
+    <div class="fonte-item"><span class="fonte-badge">METAIS</span> <a href="https://docs.awesomeapi.com.br">AwesomeAPI</a> — Ouro (XAU), Prata (XAG) em tempo real</div>
+    <div class="fonte-item"><span class="fonte-badge">ENERGIA</span> <a href="https://brapi.dev">brapi.dev</a> — Petrobras (PETR4) como proxy de petróleo</div>
+    <div class="fonte-item"><span class="fonte-badge">MACRO</span> <a href="https://dadosabertos.bcb.gov.br">API BCB (SGS)</a> — Selic Meta, IPCA mensal</div>
+    <div class="fonte-item"><span class="fonte-badge">SCANNER</span> <a href="https://brapi.dev">brapi.dev</a> — 16 ações + 11 FIIs + 6 ETFs monitorados</div>
+    <div class="fonte-item"><span class="fonte-badge">NOTÍCIAS</span> <a href="https://news.google.com">Google News RSS</a> — Notícias macro e por ativo</div>
+    <div class="fonte-item"><span class="fonte-badge">ANÁLISE IA</span> <a href="https://ai.google.dev">Gemini AI (Google)</a> — Análise com metodologia Suno Research</div>
+    <div class="fonte-item"><span class="fonte-badge">MÉTODO</span> Guia Suno Dividendos (Bazin/Barsi) + Guia Small Caps + 101 Perguntas</div>
+  </div>
+
+  <div class="footer">
+    <p>⚠️ Este relatório é meramente informativo e NÃO constitui recomendação de investimento.</p>
+    <p>Sempre consulte um assessor certificado. Dados com delay de até 15 min.</p>
+    <p style="margin-top:8px">Gerado por <strong>Analisador de Carteira v2.1</strong> — <a href="https://brapi.dev">brapi.dev</a> + <a href="https://ai.google.dev">Gemini AI</a></p>
+  </div>
+</div>
+</body>
+</html>
