@@ -21,12 +21,12 @@ else:
         {"ticker": "MATD3",  "quantidade": 20, "preco_medio": 5.78},
     ]
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-WATCHLIST_ACOES = ["TAEE11","ISAE4","CPLE6","EGIE3","AURE3","ITUB4","BBAS3","BBSE3","CXSE3","BBDC4","TIMS3","VIVT3","SBSP3","PSSA3","ALUP11","ALOS3"]
+WATCHLIST_ACOES = ["TAEE11","ISAE4","CPLE3","EGIE3","AURE3","ITUB4","BBAS3","BBSE3","CXSE3","BBDC4","TIMS3","VIVT3","SBSP3","PSSA3","ALUP11","ALOS3"]
 WATCHLIST_FIIS = ["MXRF11","KNSC11","RBRR11","MCCI11","XPLG11","HGLG11","XPML11","VISC11","HGBS11","KNRI11","JSAF11"]
 WATCHLIST_ETFS = ["DIVD11","NDIV11","DIVO11","GOLD11","BIAU39","BSLV39"]
 OUTPUT_DIR = Path(__file__).parent / "relatorios"
 OUTPUT_DIR.mkdir(exist_ok=True)
-SETOR_MAP = {"VALE3":{"setor":"Mineração","tipo":"Ação","ciclico":True},"CMIG4":{"setor":"Energia","tipo":"Ação","ciclico":False},"SAPR11":{"setor":"Saneamento","tipo":"Ação","ciclico":False},"MATD3":{"setor":"Saúde","tipo":"Ação","ciclico":False},"TAEE11":{"setor":"Transmissão","tipo":"Ação","ciclico":False},"ISAE4":{"setor":"Transmissão","tipo":"Ação","ciclico":False},"CPLE6":{"setor":"Energia","tipo":"Ação","ciclico":False},"EGIE3":{"setor":"Energia","tipo":"Ação","ciclico":False},"AURE3":{"setor":"Energia","tipo":"Ação","ciclico":False},"ITUB4":{"setor":"Bancário","tipo":"Ação","ciclico":False},"BBAS3":{"setor":"Bancário","tipo":"Ação","ciclico":False},"BBSE3":{"setor":"Seguros","tipo":"Ação","ciclico":False},"CXSE3":{"setor":"Seguros","tipo":"Ação","ciclico":False},"BBDC4":{"setor":"Bancário","tipo":"Ação","ciclico":False},"TIMS3":{"setor":"Telecom","tipo":"Ação","ciclico":False},"VIVT3":{"setor":"Telecom","tipo":"Ação","ciclico":False},"SBSP3":{"setor":"Saneamento","tipo":"Ação","ciclico":False},"PSSA3":{"setor":"Seguros","tipo":"Ação","ciclico":False},"ALUP11":{"setor":"Transmissão","tipo":"Ação","ciclico":False},"ALOS3":{"setor":"Shoppings","tipo":"Ação","ciclico":True},"MXRF11":{"setor":"FII Papel","tipo":"FII","ciclico":False},"KNSC11":{"setor":"FII Papel","tipo":"FII","ciclico":False},"RBRR11":{"setor":"FII Papel","tipo":"FII","ciclico":False},"MCCI11":{"setor":"FII Papel","tipo":"FII","ciclico":False},"XPLG11":{"setor":"FII Log","tipo":"FII","ciclico":False},"HGLG11":{"setor":"FII Log","tipo":"FII","ciclico":False},"XPML11":{"setor":"FII Shop","tipo":"FII","ciclico":True},"VISC11":{"setor":"FII Shop","tipo":"FII","ciclico":True},"HGBS11":{"setor":"FII Shop","tipo":"FII","ciclico":True},"KNRI11":{"setor":"FII Lajes","tipo":"FII","ciclico":False},"JSAF11":{"setor":"FII FoF","tipo":"FII","ciclico":False},"DIVD11":{"setor":"ETF Div","tipo":"ETF","ciclico":False},"NDIV11":{"setor":"ETF Div","tipo":"ETF","ciclico":False},"DIVO11":{"setor":"ETF Div","tipo":"ETF","ciclico":False},"GOLD11":{"setor":"ETF Ouro","tipo":"ETF","ciclico":False},"BIAU39":{"setor":"BDR Ouro","tipo":"ETF","ciclico":False},"BSLV39":{"setor":"BDR Prata","tipo":"ETF","ciclico":False}}
+SETOR_MAP = {"VALE3":{"setor":"Mineração","tipo":"Ação","ciclico":True},"CMIG4":{"setor":"Energia","tipo":"Ação","ciclico":False},"SAPR11":{"setor":"Saneamento","tipo":"Ação","ciclico":False},"MATD3":{"setor":"Saúde","tipo":"Ação","ciclico":False},"TAEE11":{"setor":"Transmissão","tipo":"Ação","ciclico":False},"ISAE4":{"setor":"Transmissão","tipo":"Ação","ciclico":False},"CPLE3":{"setor":"Energia","tipo":"Ação","ciclico":False},"EGIE3":{"setor":"Energia","tipo":"Ação","ciclico":False},"AURE3":{"setor":"Energia","tipo":"Ação","ciclico":False},"ITUB4":{"setor":"Bancário","tipo":"Ação","ciclico":False},"BBAS3":{"setor":"Bancário","tipo":"Ação","ciclico":False},"BBSE3":{"setor":"Seguros","tipo":"Ação","ciclico":False},"CXSE3":{"setor":"Seguros","tipo":"Ação","ciclico":False},"BBDC4":{"setor":"Bancário","tipo":"Ação","ciclico":False},"TIMS3":{"setor":"Telecom","tipo":"Ação","ciclico":False},"VIVT3":{"setor":"Telecom","tipo":"Ação","ciclico":False},"SBSP3":{"setor":"Saneamento","tipo":"Ação","ciclico":False},"PSSA3":{"setor":"Seguros","tipo":"Ação","ciclico":False},"ALUP11":{"setor":"Transmissão","tipo":"Ação","ciclico":False},"ALOS3":{"setor":"Shoppings","tipo":"Ação","ciclico":True},"MXRF11":{"setor":"FII Papel","tipo":"FII","ciclico":False},"KNSC11":{"setor":"FII Papel","tipo":"FII","ciclico":False},"RBRR11":{"setor":"FII Papel","tipo":"FII","ciclico":False},"MCCI11":{"setor":"FII Papel","tipo":"FII","ciclico":False},"XPLG11":{"setor":"FII Log","tipo":"FII","ciclico":False},"HGLG11":{"setor":"FII Log","tipo":"FII","ciclico":False},"XPML11":{"setor":"FII Shop","tipo":"FII","ciclico":True},"VISC11":{"setor":"FII Shop","tipo":"FII","ciclico":True},"HGBS11":{"setor":"FII Shop","tipo":"FII","ciclico":True},"KNRI11":{"setor":"FII Lajes","tipo":"FII","ciclico":False},"JSAF11":{"setor":"FII FoF","tipo":"FII","ciclico":False},"DIVD11":{"setor":"ETF Div","tipo":"ETF","ciclico":False},"NDIV11":{"setor":"ETF Div","tipo":"ETF","ciclico":False},"DIVO11":{"setor":"ETF Div","tipo":"ETF","ciclico":False},"GOLD11":{"setor":"ETF Ouro","tipo":"ETF","ciclico":False},"BIAU39":{"setor":"BDR Ouro","tipo":"ETF","ciclico":False},"BSLV39":{"setor":"BDR Prata","tipo":"ETF","ciclico":False}}
 
 def log(msg, level="INFO"):
     ts = datetime.now().strftime("%H:%M:%S")
@@ -59,7 +59,7 @@ def coletar_cotacoes_yf(tickers_list):
                 divs = t.dividends.tail(5)
                 for d, v in divs.items(): divs_hist.append({"paymentDate": str(d.date()), "rate": round(float(v), 4), "label": "DIV"})
             except: pass
-            resultados[ticker] = {"nome": info.get("longName") or info.get("shortName", ticker), "nome_curto": info.get("shortName", ticker), "preco": preco, "variacao_dia": info.get("regularMarketChangePercent", 0) or 0, "volume": info.get("regularMarketVolume", 0) or 0, "market_cap": info.get("marketCap", 0) or 0, "max_52sem": info.get("fiftyTwoWeekHigh", 0) or 0, "min_52sem": info.get("fiftyTwoWeekLow", 0) or 0, "dividend_yield": round(dy_raw * 100, 2), "earnings_per_share": info.get("trailingEps", 0) or 0, "price_earnings": info.get("trailingPE", 0) or 0, "dividendos_historico": divs_hist}
+            resultados[ticker] = {"nome": info.get("longName") or info.get("shortName", ticker), "nome_curto": info.get("shortName", ticker), "preco": preco, "variacao_dia": info.get("regularMarketChangePercent", 0) or 0, "volume": info.get("regularMarketVolume", 0) or 0, "market_cap": info.get("marketCap", 0) or 0, "max_52sem": info.get("fiftyTwoWeekHigh", 0) or 0, "min_52sem": info.get("fiftyTwoWeekLow", 0) or 0, "dividend_yield": round(dy_raw * 100, 2) if dy_raw < 1 else round(dy_raw, 2), "earnings_per_share": info.get("trailingEps", 0) or 0, "price_earnings": info.get("trailingPE", 0) or 0, "dividendos_historico": divs_hist}
             log(f"  {ticker}: R$ {preco:.2f} | DY: {resultados[ticker]['dividend_yield']:.1f}%", "OK")
         except Exception as e: log(f"  {ticker}: erro - {str(e)[:60]}", "WARN")
         time.sleep(0.3)
@@ -72,16 +72,15 @@ def coletar_cotacoes(carteira):
 def coletar_commodities():
     log("Buscando macro...")
     dados = {}
-    pares = {"USD-BRL":("Dólar","💵","cambio"),"EUR-BRL":("Euro","💶","cambio"),"BTC-BRL":("Bitcoin","₿","crypto"),"XAU-BRL":("Ouro","🥇","metal"),"XAG-BRL":("Prata","🥈","metal")}
-    for par, (nome, emoji, cat) in pares.items():
-        d = fetch_json(f"https://economia.awesomeapi.com.br/last/{par}", label=nome)
-        if d:
-            k = par.replace("-","")
+    # Busca todos os pares numa única chamada para evitar rate limit
+    pares_info = {"USDBRL":("USD/BRL","Dólar","💵","cambio"),"EURBRL":("EUR/BRL","Euro","💶","cambio"),"BTCBRL":("BTC/BRL","Bitcoin","₿","crypto"),"XAUBRL":("XAU/BRL","Ouro","🥇","metal"),"XAGBRL":("XAG/BRL","Prata","🥈","metal")}
+    d = fetch_json("https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL,XAU-BRL,XAG-BRL", label="Câmbio/Commodities")
+    if d:
+        for k, (display, nome, emoji, cat) in pares_info.items():
             if k in d:
                 v = float(d[k].get("bid",0)); var = float(d[k].get("pctChange",0))
-                dados[par.replace("-","/")] = {"valor":v,"variacao":var,"nome":nome,"categoria":cat,"emoji":emoji}
+                dados[display] = {"valor":v,"variacao":var,"nome":nome,"categoria":cat,"emoji":emoji}
                 log(f"  {nome}: R$ {v:,.2f} ({var:+.2f}%)", "OK")
-        time.sleep(0.3)
     for nome, serie, emoji in [("Selic Meta",432,"📊"),("IPCA Mensal",433,"📈")]:
         d = fetch_json(f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{serie}/dados/ultimos/1?formato=json", label=nome)
         if d and len(d) > 0:
@@ -143,16 +142,16 @@ MACRO: {json.dumps(commodities, ensure_ascii=False)}
 Índices: {json.dumps(indices, ensure_ascii=False)}
 
 OPORTUNIDADES:
-Ações: {json.dumps(opp.get('acoes',{}) if opp else {}, ensure_ascii=False)}
-FIIs: {json.dumps(opp.get('fiis',{}) if opp else {}, ensure_ascii=False)}
-ETFs: {json.dumps(opp.get('etfs',{}) if opp else {}, ensure_ascii=False)}
+Ações: {json.dumps({k:{"preco":v.get("preco",0),"dy":v.get("dividend_yield",0),"pe":v.get("price_earnings",0),"nome":v.get("nome_curto",k)} for k,v in (opp.get("acoes",{}) if opp else {}).items()}, ensure_ascii=False)}
+FIIs: {json.dumps({k:{"preco":v.get("preco",0),"dy":v.get("dividend_yield",0),"nome":v.get("nome_curto",k)} for k,v in (opp.get("fiis",{}) if opp else {}).items()}, ensure_ascii=False)}
+ETFs: {json.dumps({k:{"preco":v.get("preco",0),"dy":v.get("dividend_yield",0),"nome":v.get("nome_curto",k)} for k,v in (opp.get("etfs",{}) if opp else {}).items()}, ensure_ascii=False)}
 
 NOTÍCIAS: {json.dumps(nm+na, ensure_ascii=False)}
 
 JSON exato:
 {{"resumo_geral":"...","score_carteira":7,"sentimento_mercado":"neutro|positivo|negativo","analise_composicao":{{"diagnostico":"...","setores_faltantes":["..."],"classes_faltantes":["..."],"plano_diversificacao":"..."}},"analise_ativos":[{{"ticker":"X","recomendacao":"MANTER|COMPRAR|VENDER|AUMENTAR|REDUZIR","score":8,"analise":"...","riscos":"...","pontos_positivos":"...","impacto_macro":"..."}}],"oportunidades_acoes":[{{"ticker":"X","nome":"N","preco":0,"dividend_yield":0,"score":9,"setor":"S","motivo":"...","riscos":"...","urgencia":"ALTA|MEDIA|BAIXA"}}],"oportunidades_fiis":[{{"ticker":"X","nome":"N","preco":0,"dividend_yield":0,"score":8,"tipo":"Papel|Tijolo","motivo":"...","riscos":"...","urgencia":"ALTA|MEDIA|BAIXA"}}],"oportunidades_etfs":[{{"ticker":"X","nome":"N","preco":0,"dividend_yield":0,"score":7,"motivo":"...","riscos":"..."}}],"top3_comprar_agora":[{{"ticker":"X","tipo":"Ação|FII|ETF","motivo_curto":"...","valor_sugerido":200}}],"sugestao_aporte":"...","alertas":["..."],"proximos_eventos":["..."]}}
 
-Max 5 ações, 5 FIIs, 3 ETFs. Priorize sub-representados. APENAS JSON."""
+Max 3 ações, 3 FIIs, 2 ETFs nas oportunidades. Respostas CURTAS (max 1 frase por campo). APENAS JSON sem markdown."""
     try:
         r = requests.post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
             headers={"Content-Type":"application/json","x-goog-api-key":GEMINI_API_KEY},
@@ -163,6 +162,7 @@ Max 5 ações, 5 FIIs, 3 ETFs. Priorize sub-representados. APENAS JSON."""
         texto = texto.strip().strip("`").strip()
         if texto.startswith("json"): texto = texto[4:].strip()
         a = json.loads(texto); log("Gemini OK!", "OK"); return a
+    except json.JSONDecodeError as e: log(f"Gemini JSON erro: {e}", "ERR"); return None
     except Exception as e: log(f"Gemini erro: {e}", "ERR"); return None
 
 # HTML generation function - imported from separate module to keep main script readable
