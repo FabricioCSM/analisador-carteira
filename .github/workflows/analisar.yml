@@ -59,18 +59,13 @@ jobs:
               <h2 style="color:#3b82f6">📈 Relatório da Carteira Pronto!</h2>
               <p style="color:#94a3b8">Gerado em ${{ steps.commit.outputs.timestamp }}</p>
               <div style="background:#111827;padding:16px;border-radius:8px;margin:16px 0;border-left:3px solid #22c55e">
-                <p style="margin:0;color:#e2e8f0">O HTML completo está em anexo. Salve e abra no navegador do celular.</p>
+                <p style="margin:0;color:#e2e8f0">O HTML completo está em anexo. Salve e abra no navegador.</p>
               </div>
               <a href="https://htmlpreview.github.io/?https://github.com/FabricioCSM/analisador-carteira/blob/main/relatorios/relatorio_latest.html" 
                  style="display:inline-block;background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:12px 0">
-                🔗 Ver Online (HTMLPreview)
-              </a>
-              <br>
-              <a href="https://github.com/FabricioCSM/analisador-carteira/blob/main/relatorios/relatorio_latest.html" 
-                 style="display:inline-block;background:#111827;color:#3b82f6;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:8px 0;border:1px solid #3b82f6">
-                📂 Ver no GitHub
+                🔗 Ver Online
               </a>
               <hr style="border-color:#1e293b;margin:20px 0">
-              <p style="color:#64748b;font-size:11px">Analisador v2.1 — brapi.dev + Claude AI + Metodologia Suno</p>
+              <p style="color:#64748b;font-size:11px">Analisador v2.1 — brapi.dev + Gemini AI + Suno</p>
             </div>
           attachments: relatorios/relatorio_latest.html
