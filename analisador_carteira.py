@@ -103,10 +103,16 @@ def fetch_json(url, params=None, headers=None, label=""):
 
 
 def _brapi_headers():
-    h = {}
+    """Headers para brapi (vazio, token vai via query param)."""
+    return {}
+
+
+def _brapi_params(**extra):
+    """Monta params para brapi incluindo token."""
+    params = dict(extra)
     if BRAPI_TOKEN and BRAPI_TOKEN != "COLOQUE_SEU_TOKEN_AQUI":
-        h["Authorization"] = f"Bearer {BRAPI_TOKEN}"
-    return h
+        params["token"] = BRAPI_TOKEN
+    return params
 
 
 def _parse_quote(item):
@@ -140,8 +146,7 @@ def coletar_cotacoes(carteira):
     tickers = ",".join([a["ticker"] for a in carteira])
     log(f"Buscando cotações: {tickers}")
     url = f"https://brapi.dev/api/quote/{tickers}"
-    data = fetch_json(url, params={"fundamental": "true", "dividends": "true"},
-                      headers=_brapi_headers(), label="Cotações")
+    data = fetch_json(url, params=_brapi_params(fundamental="true", dividends="true"), label="Cotações")
     if not data or "results" not in data:
         log("Não foi possível obter cotações da brapi.dev", "ERR")
         return {}
@@ -220,7 +225,7 @@ def coletar_commodities():
     oil_etfs = {"PETR4": "Petrobras (proxy petróleo)"}
     for ticker, nome in oil_etfs.items():
         url = f"https://brapi.dev/api/quote/{ticker}"
-        d = fetch_json(url, headers=_brapi_headers(), label=nome)
+        d = fetch_json(url, params=_brapi_params(), label=nome)
         if d and "results" in d and len(d["results"]) > 0:
             r = d["results"][0]
             dados[f"{ticker} (Petróleo)"] = {
@@ -262,7 +267,7 @@ def coletar_indices():
     indices = {}
     for idx_ticker, idx_nome in [("^BVSP", "Ibovespa"), ("^IFIX", "IFIX")]:
         url = f"https://brapi.dev/api/quote/{idx_ticker}"
-        d = fetch_json(url, headers=_brapi_headers(), label=idx_nome)
+        d = fetch_json(url, params=_brapi_params(), label=idx_nome)
         if d and "results" in d and len(d["results"]) > 0:
             r = d["results"][0]
             indices[idx_nome] = {
@@ -293,8 +298,8 @@ def escanear_oportunidades():
             joined = ",".join(lote)
             log(f"  Buscando {categoria}: {joined}")
             url = f"https://brapi.dev/api/quote/{joined}"
-            data = fetch_json(url, params={"fundamental": "true", "dividends": "true"},
-                              headers=_brapi_headers(), label=f"Scan {categoria}")
+            data = fetch_json(url, params=_brapi_params(fundamental="true", dividends="true"),
+                              label=f"Scan {categoria}")
             if data and "results" in data:
                 for item in data["results"]:
                     symbol = item.get("symbol", "")
