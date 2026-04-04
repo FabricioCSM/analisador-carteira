@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerenciador de Carteira</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0a0e17;--bg2:#111827;--bg3:#1a2235;--bg4:#243049;--text:#e2e8f0;--text2:#94a3b8;--accent:#3b82f6;--accent2:#8b5cf6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--border:#1e293b; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  .container { max-width:800px; margin:0 auto; padding:20px; }
+  
+  .header { background:linear-gradient(135deg,var(--bg2),var(--bg3)); border:1px solid var(--border); border-radius:16px; padding:28px; margin-bottom:24px; text-align:center; }
+  .header h1 { font-family:'JetBrains Mono',monospace; font-size:24px; background:linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .header p { color:var(--text2); font-size:14px; margin-top:8px; }
+
+  .setup-box { background:var(--bg2); border:1px solid var(--yellow); border-radius:12px; padding:20px; margin-bottom:20px; display:none; }
+  .setup-box.show { display:block; }
+  .setup-box label { color:var(--text2); font-size:13px; display:block; margin-bottom:6px; }
+  .setup-box input { width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--bg3); color:var(--text); font-family:'JetBrains Mono',monospace; font-size:14px; margin-bottom:12px; }
+  .setup-box button { background:var(--accent); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600; font-size:14px; }
+  .setup-box button:hover { opacity:0.9; }
+
+  .status { padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; display:none; }
+  .status.success { display:block; background:#22c55e15; border:1px solid #22c55e30; color:var(--green); }
+  .status.error { display:block; background:#ef444415; border:1px solid #ef444430; color:var(--red); }
+  .status.loading { display:block; background:#3b82f615; border:1px solid #3b82f630; color:var(--accent); }
+
+  .card { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:12px; transition:border-color 0.2s; }
+  .card:hover { border-color:var(--accent); }
+  .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .ticker { font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:700; color:var(--accent); }
+  .btn-delete { background:none; border:1px solid var(--red); color:var(--red); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; transition:all 0.2s; }
+  .btn-delete:hover { background:var(--red); color:white; }
+  
+  .fields { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  .field label { font-size:11px; color:var(--text2); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px; }
+  .field input, .field select { width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg3); color:var(--text); font-family:'JetBrains Mono',monospace; font-size:15px; }
+  .field input:focus, .field select:focus { border-color:var(--accent); outline:none; }
+
+  .actions { display:flex; gap:12px; margin-top:20px; justify-content:center; flex-wrap:wrap; }
+  .btn { padding:12px 28px; border-radius:10px; border:none; cursor:pointer; font-weight:700; font-size:15px; transition:all 0.2s; display:flex; align-items:center; gap:8px; }
+  .btn:hover { transform:translateY(-1px); }
+  .btn-add { background:var(--bg2); color:var(--accent); border:2px dashed var(--accent); }
+  .btn-add:hover { background:var(--accent); color:white; border-style:solid; }
+  .btn-save { background:var(--green); color:white; font-size:16px; padding:14px 36px; }
+  .btn-save:hover { background:#16a34a; }
+  .btn-save:disabled { opacity:0.5; cursor:not-allowed; }
+  .btn-config { background:var(--bg3); color:var(--text2); border:1px solid var(--border); font-size:13px; padding:8px 16px; }
+
+  .total-bar { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin-bottom:20px; display:flex; justify-content:space-around; flex-wrap:wrap; gap:12px; }
+  .total-item { text-align:center; }
+  .total-label { font-size:11px; color:var(--text2); text-transform:uppercase; }
+  .total-value { font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; margin-top:4px; }
+
+  .empty { text-align:center; padding:40px; color:var(--text2); }
+  .empty p { font-size:15px; margin-bottom:16px; }
+
+  @media (max-width:600px) { .fields { grid-template-columns:1fr; } .container { padding:12px; } }
+</style>
+</head>
+<body>
+<div class="container">
+  
+  <div class="header">
+    <h1>📈 Gerenciador de Carteira</h1>
+    <p>Adicione, edite ou remova ativos. Clique em Salvar para atualizar o GitHub.</p>
+  </div>
+
+  <div id="setupBox" class="setup-box show">
+    <h3 style="color:var(--accent);margin-bottom:12px;font-family:'JetBrains Mono',monospace;font-size:15px">🔑 Configuração Inicial</h3>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Para salvar no GitHub, você precisa de um Personal Access Token. Gere em: <a href="https://github.com/settings/tokens/new" target="_blank" style="color:var(--accent)">github.com/settings/tokens</a> → marque <strong>repo</strong> → Generate.</p>
+    <label>GitHub Token</label>
+    <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+    <label>Repositório (usuario/repo)</label>
+    <input type="text" id="ghRepo" value="FabricioCSM/analisador-carteira">
+    <button onclick="saveConfig()">✅ Salvar Configuração</button>
+    <p style="color:var(--text2);font-size:11px;margin-top:8px">O token fica salvo apenas no seu navegador (localStorage). Nunca é enviado para terceiros.</p>
+  </div>
+
+  <div id="statusMsg" class="status"></div>
+
+  <div id="totalBar" class="total-bar" style="display:none">
+    <div class="total-item">
+      <div class="total-label">Ativos</div>
+      <div class="total-value" id="totalAtivos">0</div>
+    </div>
+    <div class="total-item">
+      <div class="total-label">Custo Total</div>
+      <div class="total-value" id="totalCusto">R$ 0,00</div>
+    </div>
+  </div>
+
+  <div id="carteiraList"></div>
+
+  <div class="actions">
+    <button class="btn btn-add" onclick="addAtivo()">➕ Adicionar Ativo</button>
+    <button class="btn btn-save" id="btnSave" onclick="salvarNoGithub()">💾 Salvar no GitHub</button>
+    <button class="btn btn-config" onclick="toggleConfig()">⚙️ Config</button>
+  </div>
+
+</div>
+
+<script>
+const REPO_PATH = 'carteira.json';
+let carteira = [];
+let ghToken = localStorage.getItem('gh_token') || '';
+let ghRepo = localStorage.getItem('gh_repo') || 'FabricioCSM/analisador-carteira';
+let fileSha = null;
+
+// Init
+window.onload = function() {
+  if (ghToken) {
+    document.getElementById('setupBox').classList.remove('show');
+    document.getElementById('ghToken').value = ghToken;
+    document.getElementById('ghRepo').value = ghRepo;
+    carregarCarteira();
+  }
+};
+
+function saveConfig() {
+  ghToken = document.getElementById('ghToken').value.trim();
+  ghRepo = document.getElementById('ghRepo').value.trim();
+  if (!ghToken) { showStatus('Preencha o token', 'error'); return; }
+  localStorage.setItem('gh_token', ghToken);
+  localStorage.setItem('gh_repo', ghRepo);
+  document.getElementById('setupBox').classList.remove('show');
+  showStatus('Configuração salva! Carregando carteira...', 'success');
+  carregarCarteira();
+}
+
+function toggleConfig() {
+  const box = document.getElementById('setupBox');
+  box.classList.toggle('show');
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.className = 'status ' + type;
+  if (type === 'success') setTimeout(() => el.style.display = 'none', 4000);
+}
+
+async function carregarCarteira() {
+  showStatus('Carregando carteira do GitHub...', 'loading');
+  try {
+    const resp = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${REPO_PATH}`, {
+      headers: { 'Authorization': `token ${ghToken}` }
+    });
+    if (resp.status === 404) {
+      // Arquivo não existe ainda, carteira vazia
+      carteira = [];
+      fileSha = null;
+      showStatus('Carteira vazia. Adicione seus ativos!', 'success');
+    } else if (resp.ok) {
+      const data = await resp.json();
+      fileSha = data.sha;
+      const content = atob(data.content.replace(/\n/g, ''));
+      carteira = JSON.parse(content);
+      showStatus(`Carteira carregada: ${carteira.length} ativos`, 'success');
+    } else {
+      throw new Error(`HTTP ${resp.status}`);
+    }
+  } catch (e) {
+    showStatus(`Erro ao carregar: ${e.message}. Verifique o token.`, 'error');
+    carteira = [];
+  }
+  renderCarteira();
+}
+
+function renderCarteira() {
+  const list = document.getElementById('carteiraList');
+  const totalBar = document.getElementById('totalBar');
+  
+  if (carteira.length === 0) {
+    list.innerHTML = '<div class="empty"><p>Nenhum ativo na carteira</p><p style="font-size:13px">Clique em "➕ Adicionar Ativo" para começar</p></div>';
+    totalBar.style.display = 'none';
+    return;
+  }
+
+  totalBar.style.display = 'flex';
+  let totalCusto = 0;
+  
+  let html = '';
+  carteira.forEach((ativo, i) => {
+    const custo = ativo.quantidade * ativo.preco_medio;
+    totalCusto += custo;
+    html += `
+    <div class="card" id="card-${i}">
+      <div class="card-header">
+        <span class="ticker">${ativo.ticker}</span>
+        <button class="btn-delete" onclick="removeAtivo(${i})">🗑️ Remover</button>
+      </div>
+      <div class="fields">
+        <div class="field">
+          <label>Ticker</label>
+          <input type="text" value="${ativo.ticker}" onchange="updateAtivo(${i}, 'ticker', this.value.toUpperCase())" placeholder="VALE3" style="text-transform:uppercase">
+        </div>
+        <div class="field">
+          <label>Quantidade</label>
+          <input type="number" value="${ativo.quantidade}" onchange="updateAtivo(${i}, 'quantidade', parseInt(this.value))" min="1" step="1">
+        </div>
+        <div class="field">
+          <label>Preço Médio (R$)</label>
+          <input type="number" value="${ativo.preco_medio}" onchange="updateAtivo(${i}, 'preco_medio', parseFloat(this.value))" min="0.01" step="0.01">
+        </div>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--text2)">
+        Custo total: <strong style="color:var(--text)">R$ ${custo.toFixed(2)}</strong>
+      </div>
+    </div>`;
+  });
+  
+  list.innerHTML = html;
+  document.getElementById('totalAtivos').textContent = carteira.length;
+  document.getElementById('totalCusto').textContent = `R$ ${totalCusto.toFixed(2)}`;
+}
+
+function addAtivo() {
+  carteira.push({ ticker: '', quantidade: 1, preco_medio: 0 });
+  renderCarteira();
+  // Focus no campo ticker do novo card
+  setTimeout(() => {
+    const cards = document.querySelectorAll('.card');
+    const lastCard = cards[cards.length - 1];
+    if (lastCard) {
+      lastCard.querySelector('input').focus();
+      lastCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 100);
+}
+
+function removeAtivo(index) {
+  const ticker = carteira[index].ticker || 'este ativo';
+  if (confirm(`Remover ${ticker} da carteira?`)) {
+    carteira.splice(index, 1);
+    renderCarteira();
+  }
+}
+
+function updateAtivo(index, field, value) {
+  carteira[index][field] = value;
+  renderCarteira();
+}
+
+async function salvarNoGithub() {
+  if (!ghToken) { toggleConfig(); return; }
+  
+  // Validação
+  const invalidos = carteira.filter(a => !a.ticker || a.quantidade <= 0 || a.preco_medio <= 0);
+  if (invalidos.length > 0) {
+    showStatus('Preencha todos os campos corretamente (ticker, quantidade > 0, preço > 0)', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btnSave');
+  btn.disabled = true;
+  btn.textContent = '⏳ Salvando...';
+  showStatus('Salvando no GitHub...', 'loading');
+
+  try {
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(carteira, null, 2))));
+    
+    const body = {
+      message: `📝 Carteira atualizada: ${carteira.length} ativos`,
+      content: content,
+      branch: 'main'
+    };
+    if (fileSha) body.sha = fileSha;
+
+    const resp = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${REPO_PATH}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${ghToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (resp.ok) {
+      const data = await resp.json();
+      fileSha = data.content.sha;
+      showStatus('✅ Carteira salva no GitHub com sucesso!', 'success');
+    } else {
+      const err = await resp.json();
+      throw new Error(err.message || `HTTP ${resp.status}`);
+    }
+  } catch (e) {
+    showStatus(`❌ Erro ao salvar: ${e.message}`, 'error');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '💾 Salvar no GitHub';
+}
+</script>
+</body>
+</html>

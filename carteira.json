@@ -1,0 +1,6 @@
+[
+  {"ticker": "VALE3",  "quantidade": 7,  "preco_medio": 79.50},
+  {"ticker": "CMIG4",  "quantidade": 17, "preco_medio": 12.00},
+  {"ticker": "SAPR11", "quantidade": 3,  "preco_medio": 40.87},
+  {"ticker": "MATD3",  "quantidade": 20, "preco_medio": 5.78}
+]

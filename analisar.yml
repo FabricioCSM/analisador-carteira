@@ -1,0 +1,54 @@
+name: Analisador de Carteira
+
+on:
+  schedule:
+    - cron: '30 11 * * 1-5'
+    - cron: '0 17 * * 1-5'
+    - cron: '30 20 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  analisar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Instalar dependências
+        run: pip install requests yfinance
+      - name: Rodar Analisador
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python analisador_carteira.py
+      - name: Commit relatórios
+        id: commit
+        run: |
+          git config user.name "Analisador Bot"
+          git config user.email "bot@analisador.local"
+          git add relatorios/
+          TIMESTAMP=$(date +'%d/%m/%Y %H:%M')
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          git diff --staged --quiet || git commit -m "📊 Relatório $TIMESTAMP"
+          git push
+      - name: Enviar Email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USER }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "📈 Relatório Carteira - ${{ steps.commit.outputs.timestamp }}"
+          to: ${{ secrets.EMAIL_TO }}
+          from: Analisador <${{ secrets.EMAIL_USER }}>
+          html_body: |
+            <div style="font-family:Arial;background:#0a0e17;color:#e2e8f0;padding:24px;border-radius:12px">
+              <h2 style="color:#3b82f6">📈 Relatório Pronto!</h2>
+              <p>Gerado em ${{ steps.commit.outputs.timestamp }}</p>
+              <p>HTML em anexo. Salve e abra no navegador.</p>
+              <a href="https://htmlpreview.github.io/?https://github.com/FabricioCSM/analisador-carteira/blob/main/relatorios/relatorio_latest.html" style="display:inline-block;background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:12px 0">🔗 Ver Online</a>
+            </div>
+          attachments: relatorios/relatorio_latest.html
